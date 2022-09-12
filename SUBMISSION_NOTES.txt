@@ -1,0 +1,50 @@
+printfmc.c :
+	saved number and set base then skipped to number case. follows similar outline to other cases.
+		
+			old				new
+			putch('X', putdat);		num = getuint(&ap, lflag);
+			putch('X', putdat);		base = 8;
+			putch('X', putdat);		goto number;
+			break;
+monitor.c
+	added line in commands for terminal functionality
+			{ "backtrace", "Display stack backtrace", mon_backtrace },
+	filled out backtrace
+
+	cprintf ("Stack backtrace:\n"); //print generic header
+	uint32_t ebp, eip, args[5]; //set aside 7 integers for print
+    	struct Eipdebuginfo dbinfo; //struct for info
+    	ebp = read_ebp(); //assign ebp
+	//I set it up to run at least once but maybe while(ebp) is better for some specific case
+    	do {
+        	eip = ((uint32_t *)ebp)[1]; //eip and other args increments of 4 off ebp
+        	args[0] = ((uint32_t *)ebp)[2];
+        	args[1] = ((uint32_t *)ebp)[3];
+        	args[2] = ((uint32_t *)ebp)[4];
+        	args[3] = ((uint32_t *)ebp)[5];
+        	args[4] = ((uint32_t *)ebp)[6];
+
+		//print in the required format
+        	cprintf("  ebp %08x  eip %08x  args %08x %08x %08x %08x %08x\n",
+                	ebp, eip, args[0], args[1], args[2], args[3], args[4]);
+
+        	debuginfo_eip (eip, &dbinfo); //pull debug info
+
+        	cprintf("         %s:%d: %.*s+%d\n",
+                	dbinfo.eip_file, dbinfo.eip_line, dbinfo.eip_fn_namelen,
+                	dbinfo.eip_fn_name, eip - dbinfo.eip_fn_addr);
+
+        	ebp = *(uint32_t *)ebp; //reassign ebp for next interation
+    	} while (ebp);
+
+kdebug.c
+	input basic if else loop as described by MIT lab
+
+	stab_binsearch(stabs, &lline, &rline, N_SLINE, addr);
+	if (lline <= rline) 
+	{
+    		info->eip_line = stabs[lline].n_desc;
+	}else 
+	{
+		return -1; 
+	}
